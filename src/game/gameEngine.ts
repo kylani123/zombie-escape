@@ -104,7 +104,7 @@ export class GameEngine {
       x: INITIAL_PLAYER_POS.x,
       y: INITIAL_PLAYER_POS.y,
       radius: 14,
-      speed: 3.2,
+      speed: 3.8, // Faster player movement to comfortably dodge zombies
       angle: -Math.PI / 2, // facing upward initially
       lives: 3,
       maxLives: 3,
@@ -243,7 +243,8 @@ export class GameEngine {
         coin.rotation += dt * 3.5;
         const distToPlayer = Math.hypot(this.player.x - coin.x, this.player.y - coin.y);
 
-        if (distToPlayer < this.player.radius + coin.radius + 2) {
+        // Generous pickup radius so collecting coins feels smooth and responsive
+        if (distToPlayer < this.player.radius + coin.radius + 6) {
           coin.collected = true;
           this.coinsCollected += 1;
           this.score += coin.value;
@@ -332,11 +333,11 @@ export class GameEngine {
       // Zombie-Player collision check (touching zombie)
       if (!this.player.isInvulnerable) {
         const contactDist = Math.hypot(this.player.x - zombie.x, this.player.y - zombie.y);
-        if (contactDist < this.player.radius + zombie.radius - 2) {
+        if (contactDist < this.player.radius + zombie.radius - 4) {
           // Take Damage!
           this.player.lives -= 1;
           this.player.isInvulnerable = true;
-          this.player.invulnerableTimer = 1.0; // 1 second immunity as specified
+          this.player.invulnerableTimer = 1.8; // 1.8 seconds immunity gives plenty of time to escape!
 
           this.screenShake = 12;
           this.flashRed = 1.0;

@@ -55,6 +55,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ engine }) => {
       // Draw Player / Survivor
       drawPlayer(ctx, engine.player);
 
+      // Draw Waypoint / Guidance Indicator (Helps player easily locate coins & exit!)
+      drawGuidanceIndicator(ctx, engine);
+
       // Draw Particles
       drawParticles(ctx, engine);
 
@@ -334,6 +337,14 @@ function drawCoin(ctx: CanvasRenderingContext2D, coin: Coin) {
   ctx.shadowColor = '#facc15';
   ctx.shadowBlur = 10;
 
+  // Soft pulsing halo for easy visibility
+  const pulse = Math.sin(Date.now() / 300 + coin.id) * 0.3 + 0.7;
+  ctx.strokeStyle = `rgba(250, 204, 21, ${0.4 * pulse})`;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(0, 0, coin.radius + 5, 0, Math.PI * 2);
+  ctx.stroke();
+
   // Outer gold rim
   ctx.fillStyle = '#eab308';
   ctx.beginPath();
@@ -560,5 +571,89 @@ function drawFloatingTexts(ctx: CanvasRenderingContext2D, engine: GameEngine) {
     ctx.shadowBlur = 4;
     ctx.fillText(ft.text, ft.x, ft.y);
     ctx.restore();
+  }
+}
+
+function drawGuidanceIndicator(ctx: CanvasRenderingContext2D, engine: GameEngine) {
+  const player = engine.player;
+  const exitReady = engine.coinsCollected >= engine.exitDoor.requiredCoins;
+
+  if (exitReady) {
+    // When exit is ready: show bright pulsing green arrow orbiting player towards exit door
+    const exitTargetX = engine.exitDoor.x + engine.exitDoor.width / 2;
+    const exitTargetY = engine.exitDoor.y + engine.exitDoor.height / 2;
+    const angle = Math.atan2(exitTargetY - player.y, exitTargetX - player.x);
+
+    ctx.save();
+    ctx.translate(player.x, player.y);
+
+    const orbitDist = 34 + Math.sin(Date.now() / 180) * 3;
+    const arrowX = Math.cos(angle) * orbitDist;
+    const arrowY = Math.sin(angle) * orbitDist;
+
+    ctx.translate(arrowX, arrowY);
+    ctx.rotate(angle);
+
+    // Glowing green arrow
+    ctx.shadowColor = '#10b981';
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath();
+    ctx.moveTo(10, 0);
+    ctx.lineTo(-6, -7);
+    ctx.lineTo(-2, 0);
+    ctx.lineTo(-6, 7);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+
+    // Floating text above player: "MENUJU EXIT ➔"
+    ctx.save();
+    ctx.shadowColor = '#10b981';
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = '#34d399';
+    ctx.font = 'bold 11px "Chakra Petch", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('MENUJU EXIT ➔', player.x, player.y - 25);
+    ctx.restore();
+  } else {
+    // Show subtle pointer towards the nearest uncollected coin
+    let nearestCoin: Coin | null = null;
+    let minDist = Infinity;
+    for (const c of engine.coins) {
+      if (!c.collected) {
+        const d = Math.hypot(c.x - player.x, c.y - player.y);
+        if (d < minDist) {
+          minDist = d;
+          nearestCoin = c;
+        }
+      }
+    }
+
+    if (nearestCoin && minDist > 60) {
+      const angle = Math.atan2(nearestCoin.y - player.y, nearestCoin.x - player.x);
+      ctx.save();
+      ctx.translate(player.x, player.y);
+
+      const orbitDist = 28;
+      const arrowX = Math.cos(angle) * orbitDist;
+      const arrowY = Math.sin(angle) * orbitDist;
+
+      ctx.translate(arrowX, arrowY);
+      ctx.rotate(angle);
+
+      // Subtle gold indicator
+      ctx.fillStyle = 'rgba(250, 204, 21, 0.75)';
+      ctx.beginPath();
+      ctx.moveTo(6, 0);
+      ctx.lineTo(-4, -4);
+      ctx.lineTo(-1, 0);
+      ctx.lineTo(-4, 4);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+    }
   }
 }
