@@ -1,0 +1,6 @@
+{
+  "name": "Zombie Escape",
+  "description": "Game web 2D bertema pelarian dari zombie, kumpulkan koin dan capai pintu keluar!",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
